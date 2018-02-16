@@ -1,4 +1,5 @@
 # also do this  conda install -c https://conda.anaconda.org/kne pybox2d
+#pip install --ignore-installed --upgrade tensorflow
 #PET_env.py
 #contains class for the enviroment
 #cd '/anaconda3/envs/TestPet/TestPet'
@@ -7,8 +8,12 @@
 #env = gym.make('PET-v0')
 #env.render()
 
+
+
 #for i in range(10):
 #    env.render()
+#     action = env.action_space.sample()
+#     env.step(action)
 #    env.reset()
    
 import Box2D
@@ -28,11 +33,15 @@ class PETEnv(gym.Env):
     def __init__(self):
         self.__version__ = "0.1.0"
         self.test=1
+        self.statew=30
+        self.stateh=30
+        self.stated=30
         self.img=PT.get_data()
         im=self.img
         min=self.img.min()
         max=self.img.max()
         self.sz=PT.get_siz()
+        self.ref=PT.get_ref_for_dice()
         sa=self.sz[0]
         sb=self.sz[1]
         print('max image is')
@@ -59,7 +68,7 @@ class PETEnv(gym.Env):
             self.sa=round(self.sz[0]/2)
             self.sb=round(self.sz[1]/2)
             self.sc=round(self.sz[2]/2)
-            self.statea=[0,0,0,30,30,30,60,30,30]
+            self.statea=[100,100,100,130,130,130,30,30,30]
             self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
             self.stateax=self.statea[0]
             self.stateay=self.statea[1]
@@ -103,6 +112,18 @@ class PETEnv(gym.Env):
     def _step(self, action):  
 
         if action is not None:
+            self.la.remove()
+            self.lb.remove()
+            self.lc.remove() 
+            self.ld.remove()
+            self.le.remove()
+            self.lf.remove()
+            self.lg.remove() 
+            self.lh.remove()
+            self.li.remove() 
+            self.lj.remove()
+            self.lk.remove()
+            self.ll.remove()
 
             self.statea[0]=self.statea[0]+int(action[0])
             self.statea[1]=self.statea[1]+int(action[1])
@@ -111,6 +132,8 @@ class PETEnv(gym.Env):
             self.statea[4]=self.statea[4]+int(action[1])
             self.statea[5]=self.statea[5]+int(action[2])
 
+
+
             self.stateax=self.statea[0]
             self.stateay=self.statea[1]
             self.stateaz=self.statea[2]
@@ -118,11 +141,55 @@ class PETEnv(gym.Env):
             self.stateby=self.statea[4]
             self.statebz=self.statea[5]
 
-            self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
-            step_reward = 0
-            done = False
 
-        return self.state, step_reward, done, {}
+            if self.stateax+self.statew>(self.sz[0]-1):
+               print('dimx initialized two big reducing')
+               print(self.stateax)
+               self.stateax=(self.sz[0]-self.statew)-1
+               print(self.stateax)
+
+            if self.stateay+self.stated>(self.sz[1]-1):
+               print('dimy initialized two big reducing')
+               print(self.stateay)
+               self.stateay=(self.sz[1]-self.stated)-1
+               print(self.stateay)
+
+            if self.stateaz+self.stateh>(self.sz[2]-1):
+               print('size of image in z is')
+               print(self.sz[2])
+               print('dimz initialized two big reducing')
+               print('inital z is')
+               print(self.stateaz)
+               print('height is')
+               print(self.stateh)
+               self.stateaz=(self.sz[2]-self.stateh)-1
+               print('reduced z is')
+               print(self.stateaz)
+
+            self.statebx=self.stateax+self.statew
+            self.stateby=self.stateay+self.stateh
+            self.statebz=self.stateaz+self.stated
+
+            self.statea[0]=self.stateax
+            self.statea[1]=self.stateay
+            self.statea[2]=self.stateaz
+            self.statea[3]=self.statebx
+            self.statea[4]=self.stateby
+            self.statea[5]=self.statebz
+
+            self.sa=round((self.stateax+self.statebx)/2)
+            self.sb=round((self.stateay+self.stateby)/2)
+            self.sc=round((self.stateaz+self.statebz)/2)
+
+
+            self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
+            reward = PT.get_structsim(self.ref,self.state)
+            print('struct sim reward is', reward)
+
+            done = bool(reward==1)
+
+
+        return np.array(self.state), float(reward), done, self.statea, {}
             
 
 
@@ -186,14 +253,47 @@ class PETEnv(gym.Env):
             self.statebz=self.stateaz+self.stated
 
             #self.action_space=spaces.Discrete(3) #Just translation atm tx,ty,tz
-          
+         
+            self.sa=round((self.stateax+self.statebx)/2)
+            self.sb=round((self.stateay+self.stateby)/2)
+            self.sc=round((self.stateaz+self.statebz)/2)
 
+            #adjusted here
+            self.statea=[100,100,100,130,130,130,30,30,30]
+            self.stateax=self.statea[0]
+            self.stateay=self.statea[1]
+            self.stateaz=self.statea[2]
+            self.statebx=self.statea[3]
+            self.stateby=self.statea[4]
+            self.statebz=self.statea[5]
+            self.statew=self.statea[6]
+            self.stateh=self.statea[7]
+            self.stated=self.statea[8]
+           
             self.sa=round((self.stateax+self.statebx)/2)
             self.sb=round((self.stateay+self.stateby)/2)
             self.sc=round((self.stateaz+self.statebz)/2)
 
             self.statea=[self.stateax, self.stateay, self.stateaz, self.statebx, self.stateby, self.statebz, self.statew, self.stateh, self.stated]
+
+            self.sa=round(self.sz[0]/2)
+            self.sb=round(self.sz[1]/2)
+            self.sc=round(self.sz[2]/2)
+            self.statea=[100,100,100,130,130,130,30,30,30]
+            self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
+            self.stateax=self.statea[0]
+            self.stateay=self.statea[1]
+            self.stateaz=self.statea[2]
+            self.statebx=self.statea[3]
+            self.stateby=self.statea[4]
+            self.statebz=self.statea[5]
+
+
             self.state=self.img[self.stateax:self.statebx,self.stateay:self.stateby,self.stateaz:self.statebz]
+
+
+
+
 
             #self.axes.cla()
             return np.array(self.state)
