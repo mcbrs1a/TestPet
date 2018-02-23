@@ -1,8 +1,8 @@
 # also do this  conda install -c https://conda.anaconda.org/kne pybox2d
 #pip install --ignore-installed --upgrade tensorflow
-#PET_env.py
-#contains class for the enviroment
-#cd '/anaconda3/envs/TestPet/TestPet'
+#source activate TestPet
+#cd '/home/petic/anaconda/envs/A3Cexample/TestPet'
+#python
 #import gym
 #import gym_PET
 #env = gym.make('PET-v0')
@@ -183,7 +183,7 @@ class PETEnv(gym.Env):
 
 
             self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
-            reward = PT.get_structsim(self.ref,self.state)
+            reward = (PT.get_structsim(self.ref,self.state)+1)/2
             print('struct sim reward is', reward)
 
             done = bool(reward==1)

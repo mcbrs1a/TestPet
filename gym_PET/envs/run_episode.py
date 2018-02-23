@@ -1,10 +1,12 @@
 #run episode
 #parameters are used to choose action from observation
+#state and observation same thing
 
 import numpy as np
 import gym
 import random
 import gym_PET
+import tensorflow as tf
 import numpy as np
 env = gym.make('PET-v0')
 import PET_read as PT
@@ -13,6 +15,13 @@ sh=observations.shape
 ref=PT.get_ref_for_dice()
 stru=PT.get_structsim(ref, observations)
 parameters=np.random.rand(sh[0], sh[1], sh[2])*2-1
+
+def policy_gradient():  
+     params.get_shape().as_list()
+    params = tf.get_variable("policy_parameters",[4,2])
+    state = tf.placeholder("float",[None,4])
+    linear = tf.matmul(state,params)
+    probabilities = tf.nn.softmax(linear)
 
 
 def switch_action(action, tit):

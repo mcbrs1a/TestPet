@@ -40,7 +40,12 @@ def get_mse(imref, it):
         return err
 
 def get_structsim(imref, it):
-    imrs=imref.shape
+    imrefx=imref
+    imrefx_min=imrefx.min(axis=(0,1,2),keepdims=True)
+    imrefx_max=imrefx.max(axis=(0,1,2),keepdims=True)
+    imrefx = (imrefx - imrefx_min)/(imrefx_max-imrefx_min)
+    imrefx=imrefx*2
+    imrs=imrefx.shape
     imts=it.shape 
     mx=np.maximum(imrs,imts)
     seg=np.zeros(mx)
@@ -103,12 +108,30 @@ def get_ref_for_dice():
 
 def get_data():
     PET_img = nib.load('/home/petic/anaconda/envs/A3Cexample/TestPet/gym_PET/envs/io/test.nii', mmap=False)
+    #PET_img.set_data_dtype(new_dtype)
     PET_img_data = PET_img.get_data()
     PET_img_data.shape
-    imm=PET_img_data
+    imm=PET_img_data.squeeze()
+    mx=int(imm.shape[0])
+    my=int(imm.shape[1])
+    mz=int(imm.shape[2])
+    imt=imm.astype(np.int16)
+    imp=imt
+    imp[:,:,0:35]=1000
+    imp[:,:,mz-35:mz]=1000
+    imp[:,0:35,:]=1000
+    imp[:,my-35:my-1,:]=1000
+    imp[0:35,:,:]=-1000
+    imp[(mx-35):(mx),:,:]=1000
+    #imp[0:mx,0:my,0:mz]=1000000
+    #imp[mx:,my:,mz:]=-1000000
     #imm=np.random.random((3,3,3))
-    im=imm.squeeze()
-    return im
+    print('setting zeros to 1000')
+    impr=imp
+    imp=imp[:,:,:,np.newaxis]
+    array_img=nib.Nifti1Image(imp,PET_img.affine)
+    nib.save(array_img,'/home/petic/anaconda/envs/A3Cexample/TestPet/gym_PET/envs/io/testchanged.nii')
+    return impr
 
 def get_siz():
     PET_img = nib.load('/home/petic/anaconda/envs/A3Cexample/TestPet/gym_PET/envs/io/test.nii', mmap=False)
@@ -138,6 +161,8 @@ def show_slices(slices, fig, axes):
                 #plt.show()
     plt.draw()
     return axes
+
+
 
 
 #slice_0 = PET_img_data[125, :, :,0]
