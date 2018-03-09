@@ -1,0 +1,134 @@
+env.render()
+observation=env.render()
+
+policy_grad = policy_gradient()
+value_grad = value_gradient()
+params, linear, pl_calculated, pl_state, pl_actions, pl_advantages, pl_optimizer = policy_grad
+vl_calculated, vl_state, vl_newvals,vl_optimizer,vl_w1, vl_b1, vl_h1, vl_w2, vl_b2, vl_loss = value_grad
+graph1 = tf.Graph()
+sess = tf.Session(graph=graph1)
+sess = tf.InteractiveSession()
+tf.global_variables_initializer
+#sess.run(tf.initialize_all_variables())
+sess.run(tf.global_variables_initializer())
+
+totalreward = 0
+lossa=[]
+states = []
+actions = []
+actiontook=[]
+reward=[]
+advantages = []
+transitions = []
+update_vals = []
+probb=[]
+linbb=[]
+parb=[]
+old_observation=[]
+#for _ in range(100):
+#calculate policy
+
+#START HERE
+
+obs_vector = np.expand_dims(observation, axis=0)
+x=obs_vector
+inda=[x==1000]
+indb=[x==-1000]
+x_min=x.min(axis=(0,1,2),keepdims=True)
+x_max=x.max(axis=(0,1,2),keepdims=True)
+x = (x - x_min)/(x_max-x_min)
+x=x*2
+x[inda]=1000
+x[indb]=-1000
+obs_vectorr=x
+#obs_vectorR=np.reshape(obs_vectorr, [obs_vector.shape[0],obs_vector.shape[1]* obs_vector.shape[2]* obs_vector.shape[3]])
+obs_vectorR=np.reshape(obs_vectorr, [obs_vector.shape[0],obs_vector.shape[1]* obs_vector.shape[2]* obs_vector.shape[3]])
+probs = sess.run(pl_calculated,feed_dict={pl_state: obs_vectorR})
+lin = sess.run(linear,feed_dict={pl_state: obs_vectorR})
+par = sess.run(params,feed_dict={pl_state: obs_vectorR})
+#print(lin)
+#print(probs)
+#action = 0 if random.uniform(0,1) < probs[0][0] else 1
+actionn=np.around((probs-0.5)*10)
+action=actionn[0]
+#action[0]=0
+#action[1]=0
+#action[2]=-5
+#record the transition
+#states.append(observation)
+states.append(obs_vectorR)
+#actionblank = action
+#actions.append(actionblank)
+probb.append(probs)
+linbb.append(lin)
+parb.append(par)
+# take the action in the environment
+old_observation = observation
+observation, reward, done, statea, actiontook, info = env.step(action)
+actionblank = actiontook
+actions.append(actionblank)
+env.render()
+transitions.append((old_observation, actiontook, reward))
+totalreward += reward
+if done:
+break
+index=0
+index2=0
+#for index, trans in enumerate(transitions):
+#print("index is", index)  
+trans=transitions[index]
+obs, action, reward = trans
+# calculate discounted monte-carlo return
+future_reward = 0
+future_transitions = len(transitions) - index
+decrease = 1
+#for index2 in range(future_transitions):
+#print("index2 is", index2) 
+future_reward += transitions[(index2) + index][2] * decrease# accumatlive reward from index through to end (index2)
+decrease = decrease * 0.97
+obs_vector = np.expand_dims(obs, axis=0)
+obs_vectorR=np.reshape(obs_vector, [obs_vector.shape[0],obs_vector.shape[1]* obs_vector.shape[2]* obs_vector.shape[3]])
+currentval = sess.run(vl_calculated,feed_dict={vl_state: obs_vectorR})[0][0]# Feed Forward
+advantages.append(future_reward - currentval)
+update_vals.append(future_reward)
+update_vals_vector = np.expand_dims(update_vals, axis=1)
+sess.run(vl_optimizer, feed_dict={vl_state: np.squeeze(states), vl_newvals: update_vals_vector}) # future reward used to minimize loss
+advantages_vector = np.expand_dims(advantages, axis=1)
+sess.run(pl_optimizer, feed_dict={pl_state: np.squeeze(states), pl_advantages: advantages_vector, pl_actions: actions})
+return totalreward
+
+
+
+
+
+update_vals=[]
+for index, trans in enumerate(transitions):
+    print("Iterating through examples so observation and action change")
+    #print("index is", index)  
+    obs, action, reward = trans
+    # calculate discounted monte-carlo return
+    future_reward = 0
+    future_transitions = len(transitions) - index
+    decrease = 1
+    for index2 in range(future_transitions):
+        print("Finding Future rewards")
+        #print("index2 is", index2) 
+        future_reward += transitions[(index2) + index][2] * decrease
+        print("Future reward is", future_reward)
+        decrease = decrease * 0.97
+    obs_vector = np.expand_dims(obs, axis=0)
+    obs_vectorR=np.reshape(obs_vector, [obs_vector.shape[0],obs_vector.shape[1]* obs_vector.shape[2]* obs_vector.shape[3]])
+    print("Feeding through Neural Network")
+    currentval = sess.run(vl_calculated,feed_dict={vl_state: obs_vectorR})[0][0]
+    print("current val (feed forward) is", currentval)
+    advantages.append(future_reward - currentval) #advantages is used to changed polcy i.e our action
+    update_vals.append(future_reward)
+
+
+print("Updating Neural Network")
+update_vals_vector = np.expand_dims(update_vals, axis=1)
+sess.run(vl_optimizer, feed_dict={vl_state: np.squeeze(states), vl_newvals: update_vals_vector})
+vlloss = sess.run(vl_loss, feed_dict={vl_state: np.squeeze(states), vl_newvals: update_vals_vector})
+print("vl_loss is", vl_loss)
+
+

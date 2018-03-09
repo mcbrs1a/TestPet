@@ -61,7 +61,7 @@ def get_structsim(imref, it):
         dhr=np.floor(diffr)
         gt[int(dhr[0]):int(dhr[0]+imrs[0]), int(dhr[1]):int(dhr[1]+imrs[1]), int(dhr[2]):int(dhr[2]+imrs[2])]=imref
         strsim=ssim(gt,seg)
-        print("structed similarity is", strsim)
+        #print("structed similarity is", strsim)
         return strsim 
         
     else:
@@ -71,7 +71,7 @@ def get_structsim(imref, it):
         dhr=np.floor(diffr)
         gt[int(dhr[0]):int(dhr[0]+imrs[0]), int(dhr[1]):int(dhr[1]+imrs[1])]=imref
         strsim=ssim(gt,seg)
-        print("structed similarity is", strsim)
+        #print("structed similarity is", strsim)
         return strsim 
 
 
@@ -117,12 +117,12 @@ def get_data():
     mz=int(imm.shape[2])
     imt=imm.astype(np.int16)
     imp=imt
-    imp[:,:,0:35]=1000
-    imp[:,:,mz-35:mz]=1000
-    imp[:,0:35,:]=1000
-    imp[:,my-35:my-1,:]=1000
-    imp[0:35,:,:]=-1000
-    imp[(mx-35):(mx),:,:]=1000
+    imp[:,:,0:15]=1000
+    imp[:,:,mz-15:mz]=1000
+    imp[:,0:15,:]=1000
+    imp[:,my-15:my-1,:]=1000
+    imp[0:15,:,:]=1000
+    imp[(mx-15):(mx),:,:]=1000
     #imp[0:mx,0:my,0:mz]=1000000
     #imp[mx:,my:,mz:]=-1000000
     #imm=np.random.random((3,3,3))

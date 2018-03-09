@@ -44,8 +44,8 @@ class PETEnv(gym.Env):
         self.ref=PT.get_ref_for_dice()
         sa=self.sz[0]
         sb=self.sz[1]
-        print('max image is')
-        print(self.img.max())
+        #print('max image is')
+        #print(self.img.max())
         self.la=None 
         self.lb=None
         self.lc=None
@@ -112,6 +112,8 @@ class PETEnv(gym.Env):
     def _step(self, action):  
 
         if action is not None:
+            turn=[0, 0, 0]
+            tmp=[0,0,0,0,0,0]
             self.la.remove()
             self.lb.remove()
             self.lc.remove() 
@@ -125,21 +127,27 @@ class PETEnv(gym.Env):
             self.lk.remove()
             self.ll.remove()
 
-            self.statea[0]=self.statea[0]+int(action[0])
-            self.statea[1]=self.statea[1]+int(action[1])
-            self.statea[2]=self.statea[2]+int(action[2])
-            self.statea[3]=self.statea[3]+int(action[0])
-            self.statea[4]=self.statea[4]+int(action[1])
-            self.statea[5]=self.statea[5]+int(action[2])
+            #self.statea[0]=self.statea[0]+int(action[0])
+            #self.statea[1]=self.statea[1]+int(action[1])
+            #self.statea[2]=self.statea[2]+int(action[2])
+            #self.statea[3]=self.statea[3]+int(action[0])
+            #self.statea[4]=self.statea[4]+int(action[1])
+            #self.statea[5]=self.statea[5]+int(action[2])
+
+            tmp[0]=self.statea[0]+int(action[0])
+            tmp[1]=self.statea[1]+int(action[1])
+            tmp[2]=self.statea[2]+int(action[2])
+            tmp[3]=self.statea[3]+int(action[0])
+            tmp[4]=self.statea[4]+int(action[1])
+            tmp[5]=self.statea[5]+int(action[2])
 
 
-
-            self.stateax=self.statea[0]
-            self.stateay=self.statea[1]
-            self.stateaz=self.statea[2]
-            self.statebx=self.statea[3]
-            self.stateby=self.statea[4]
-            self.statebz=self.statea[5]
+            self.stateax=tmp[0]
+            self.stateay=tmp[1]
+            self.stateaz=tmp[2]
+            self.statebx=tmp[3]
+            self.stateby=tmp[4]
+            self.statebz=tmp[5]
 
 
             if self.stateax+self.statew>(self.sz[0]-1):
@@ -169,6 +177,37 @@ class PETEnv(gym.Env):
             self.statebx=self.stateax+self.statew
             self.stateby=self.stateay+self.stateh
             self.statebz=self.stateaz+self.stated
+    
+            tempobs=self.img[self.stateax:self.statebx,self.stateay:self.stateby,self.stateaz:self.statebz]
+
+            if np.any(tempobs[0,0,:]==1000):
+                action[2]=-action[2]
+                print('turn around in z')
+                turn[2]=1
+            if np.any(tempobs[0,:,0]==1000):
+                action[1]=-action[1]
+                print('turn around in y')
+                turn[1]=1
+            if np.any(tempobs[:,0,0]==1000):
+                action[0]=-action[0]
+                print('turn around in z')
+                turn[0]=1
+
+
+            tmp[0]=self.statea[0]+int(action[0])
+            tmp[1]=self.statea[1]+int(action[1])
+            tmp[2]=self.statea[2]+int(action[2])
+            tmp[3]=self.statea[3]+int(action[0])
+            tmp[4]=self.statea[4]+int(action[1])
+            tmp[5]=self.statea[5]+int(action[2])
+
+
+            self.stateax=tmp[0]
+            self.stateay=tmp[1]
+            self.stateaz=tmp[2]
+            self.statebx=tmp[3]
+            self.stateby=tmp[4]
+            self.statebz=tmp[5]
 
             self.statea[0]=self.stateax
             self.statea[1]=self.stateay
@@ -183,13 +222,14 @@ class PETEnv(gym.Env):
 
 
             self.state=self.img[self.statea[0]:self.statea[3],self.statea[1]:self.statea[4],self.statea[2]:self.statea[5]]
+          
             reward = (PT.get_structsim(self.ref,self.state)+1)/2
             print('struct sim reward is', reward)
 
-            done = bool(reward==1)
+            done = bool(reward>0.98)
 
 
-        return np.array(self.state), float(reward), done, self.statea, {}
+        return np.array(self.state), float(reward), done, self.statea, action, {}
             
 
 
@@ -344,8 +384,8 @@ class PETEnv(gym.Env):
         ax=PT.show_slices([slice_0, slice_1, slice_2],self.fig,self.axes)
      
         obs=self.statea
-        print('obs is')
-        print(obs)
+        #print('obs is')
+        #print(obs)
 
         la=ax[0].plot(np.linspace(obs[1],obs[4], num=abs(obs[4]-obs[1])),np.linspace(obs[2],obs[2], num=abs(obs[4]-obs[1])),"r-") #first dim static
         lb=ax[0].plot(np.linspace(obs[1],obs[4], num=abs(obs[4]-obs[1])),np.linspace(obs[5],obs[5], num=abs(obs[4]-obs[1])),"b-")
